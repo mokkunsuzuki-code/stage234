@@ -1,113 +1,91 @@
-# Stage233: External Signature Verification
+# Stage234: Real-Key Signing (Ed25519 + GPG)
+
+This stage introduces real cryptographic signing keys on top of the existing
+external signature verification framework (Stage233).
 
 ## Overview
 
-This stage introduces **external signature verification**.
+Stage233 established a verifiable external signature structure.
 
-Signatures are no longer purely internal.
-They are now associated with **real-world identities**.
+Stage234 upgrades this by introducing:
 
-Example:
+- Ed25519 persistent signing keys
+- GPG identity-based signatures
+- Detached signature verification
 
-- self (owner)
-- GitHub user
-- external researcher
+This makes the system verifiable in real-world environments.
 
-👉 This connects the system to **real-world trust**
+## What This Enables
 
----
+- Tamper resistance at publication level
+- Independent verification by third parties
+- Meaningful GitHub distribution
+- Researcher-grade auditability
 
-## Concept
+## Signing Layers
 
-Previous stage:
+### Ed25519
 
+- Deterministic signing
+- Fast verification
+- Repository-level identity
 
-Stage232: Threshold Signature
-→ Structure only (2-of-3)
+Artifacts:
 
+- `keys/public/stage234_ed25519_public.pem`
+- `out/signatures/stage234_release_manifest.ed25519.sig.json`
 
-This stage:
+### GPG
 
+- Identity-based signing
+- Compatible with GitHub / standard tooling
+- Human-verifiable identity binding
 
-Stage233: External Signatures
-→ Real-world identities attached
+Artifacts:
 
+- `gpg_pubkeys/stage234_maintainer_public.asc`
+- `out/signatures/stage234_release_manifest.json.asc`
 
----
+## How to Run
 
-## Why This Matters
-
-- Moves from abstract model to real-world trust
-- Enables identity-based validation
-- Prepares for real cryptographic signatures
-- Foundation for external verification and collaboration
-
----
-
-## External Signers
-
-Defined in:
-
-
-external_signatures/config.yaml
-
-
-Example:
-
-```yaml
-external_signers:
-  - id: self
-    type: local_key
-
-  - id: github_user
-    type: github_identity
-
-  - id: researcher
-    type: external_identity
-How It Works
-
-Verification logic:
-
-Count valid signatures
-↓
-Check if threshold is met
-↓
-PASS / FAIL
-Run
-./tools/run_stage233_external.sh
-
-Expected output:
-
-[OK] External signatures verified
-Structure
-stage233/
-├── external_signatures/
-│   └── config.yaml
-├── tools/
-│   ├── verify_external_signatures.py
-│   └── run_stage233_external.sh
-Security Perspective
-
-This stage introduces:
-
-Identity-bound signatures
-External trust anchors
-Real-world validation model
-Limitations
-Signatures are simulated
-No cryptographic verification yet
-No key management
-Next Stage
-
-Stage234:
-
-👉 Real cryptographic signatures
-
+```bash
+./tools/run_stage234_real_keys.sh
+Verification
 Ed25519
-GPG / GitHub verified signatures
-Actual key validation
+python3 tools/verify_stage234_ed25519.py \
+  --payload out/signatures/stage234_release_manifest.json \
+  --signature out/signatures/stage234_release_manifest.ed25519.sig.json \
+  --public-key keys/public/stage234_ed25519_public.pem
+GPG
+bash tools/verify_stage234_gpg_detached.sh \
+  out/signatures/stage234_release_manifest.json \
+  out/signatures/stage234_release_manifest.json.asc \
+  gpg_pubkeys/stage234_maintainer_public.asc
+Important Notes
+Private keys are never committed
+All verification is reproducible
+No trust is assumed beyond published keys
+Stage Progression
+Stage233 → External signature verification structure
+Stage234 → Real cryptographic identity and signing
+Security Model
+
+The system binds:
+
+Claim
+↓
+Evidence
+↓
+Manifest
+↓
+Signature
+↓
+Verification
+
+This creates a reproducible and auditable security pipeline.
+
 License
 
 MIT License
 
-Copyright (c) 2025 Motohiro Suzuki
+© 2025 Motohiro Suzuki

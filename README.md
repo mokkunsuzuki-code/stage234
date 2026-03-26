@@ -1,76 +1,85 @@
-# Stage234: Real-Key Signing (Ed25519 + GPG)
+（# Stage235: GitHub Verified Commit (GPG Identity Binding)
 
-This stage introduces real cryptographic signing keys on top of the existing
-external signature verification framework (Stage233).
+This stage binds local GPG signing keys to a GitHub account,
+enabling "Verified" commit status on GitHub.
 
 ## Overview
 
-Stage233 established a verifiable external signature structure.
+Stage234 introduced real cryptographic signing using:
 
-Stage234 upgrades this by introducing:
+- Ed25519 keys (repository-level identity)
+- GPG keys (identity-based signing)
 
-- Ed25519 persistent signing keys
-- GPG identity-based signatures
-- Detached signature verification
+Stage235 extends this by:
 
-This makes the system verifiable in real-world environments.
+- Linking GPG public key to GitHub account
+- Enabling GitHub-side signature verification
+- Making commit authorship visibly verifiable
 
 ## What This Enables
 
-- Tamper resistance at publication level
-- Independent verification by third parties
-- Meaningful GitHub distribution
-- Researcher-grade auditability
+- GitHub "Verified" badge on commits
+- Stronger authorship authenticity
+- Public auditability of commit origin
+- Alignment with real-world developer identity
 
-## Signing Layers
+## Verification Flow
 
-### Ed25519
+Local commit (signed with private key)
+↓
+GitHub receives commit
+↓
+GitHub matches public key
+↓
+**Verified badge displayed**
 
-- Deterministic signing
-- Fast verification
-- Repository-level identity
+## Requirements
 
-Artifacts:
+- GPG key pair (created locally)
+- Public key registered on GitHub
+- Git configured to use signing key
+- Verified email address on GitHub
 
-- `keys/public/stage234_ed25519_public.pem`
-- `out/signatures/stage234_release_manifest.ed25519.sig.json`
+## Setup (Local)
 
-### GPG
-
-- Identity-based signing
-- Compatible with GitHub / standard tooling
-- Human-verifiable identity binding
-
-Artifacts:
-
-- `gpg_pubkeys/stage234_maintainer_public.asc`
-- `out/signatures/stage234_release_manifest.json.asc`
-
-## How to Run
+### 1. Check GPG key
 
 ```bash
-./tools/run_stage234_real_keys.sh
-Verification
-Ed25519
-python3 tools/verify_stage234_ed25519.py \
-  --payload out/signatures/stage234_release_manifest.json \
-  --signature out/signatures/stage234_release_manifest.ed25519.sig.json \
-  --public-key keys/public/stage234_ed25519_public.pem
-GPG
-bash tools/verify_stage234_gpg_detached.sh \
-  out/signatures/stage234_release_manifest.json \
-  out/signatures/stage234_release_manifest.json.asc \
-  gpg_pubkeys/stage234_maintainer_public.asc
-Important Notes
-Private keys are never committed
-All verification is reproducible
-No trust is assumed beyond published keys
-Stage Progression
-Stage233 → External signature verification structure
-Stage234 → Real cryptographic identity and signing
-Security Model
+gpg --list-secret-keys --keyid-format=long
+2. Set signing key
+git config --global user.signingkey <KEY_ID>
+git config --global commit.gpgsign true
+3. Ensure GPG agent works
+export GPG_TTY=$(tty)
+Export Public Key
+gpg --armor --export <KEY_ID> > gpg_pubkeys/stage235_github_public.asc
 
-The system binds:
+👉 このファイルを GitHub に登録
+
+GitHub:
+Settings → SSH and GPG keys → New GPG key
+
+Test Signed Commit
+git commit -S -m "Stage235: signed commit"
+git push
+Expected Result
+
+GitHub上で👇
+
+👉 Verified 表示
+
+Important Notes
+Verified = GitHubが署名を検証した状態
+完全な身元保証ではないが、強い本人性証明
+秘密鍵は絶対に公開しない
+Stage Progression
+
+Stage234 → Cryptographic signing (Ed25519 + GPG)
+Stage235 → GitHub identity verification (Verified commits)
+
+Security Model Extension
+
+The system now binds:
 
 Claim
 ↓
@@ -80,12 +89,12 @@ Manifest
 ↓
 Signature
 ↓
-Verification
+GitHub Identity Verification
 
-This creates a reproducible and auditable security pipeline.
+This connects cryptographic proof with platform-level identity.
 
 License
 
 MIT License
 
-© 2025 Motohiro Suzuki
+© 2025 Motohiro Suzuki）
